@@ -20,7 +20,7 @@ public class ApiResponse<T> {
 	}
 
 	private String message;
-	private LocalDateTime timestamp = LocalDateTime.now();
+	//private LocalDateTime timestamp = LocalDateTime.now();
 	private String token;
 	private T data;
 
@@ -30,4 +30,5 @@ public class ApiResponse<T> {
 //		this.token = token;
 //		this.data = data;
 //	}
+	
 }

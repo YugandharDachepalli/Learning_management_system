@@ -20,6 +20,14 @@ import com.te.lms.dto.MentorUpdateDto;
 import com.te.lms.dto.RejectDto;
 import com.te.lms.dto.RequestListMessageDto;
 import com.te.lms.email.SendEmail;
+import com.te.lms.exception.BatchDeletionFailedException;
+import com.te.lms.exception.BatchUpdationFailedException;
+import com.te.lms.exception.EmployeeCannotBeApprovedException;
+import com.te.lms.exception.EmployeeNotFoundException;
+import com.te.lms.exception.MentorDeletionFailedException;
+import com.te.lms.exception.MentorUpdationFailedException;
+import com.te.lms.exception.NoMentorsFoundException;
+import com.te.lms.exception.RegistrationFailedException;
 import com.te.lms.response.ApiResponse;
 import com.te.lms.service.AdminService;
 
@@ -32,15 +40,28 @@ public class AdminController {
 
 	private final AdminService adminService;
 	private final SendEmail sendEmail;
-
-//Mentor Register...................................................
-	@PostMapping(path = "/register/mentor")
-	public ApiResponse<String> registerMentor(@RequestBody MentorDto mentorDto) {
-		Optional<String> mentor = adminService.registerMentor(mentorDto);
-		sendEmail.sendEmail("yugandhar262@gmail.com", mentorDto.getMentorEmailId(), "Welcome to the team",
-				"You are now registered as a mentor in the team of techno elevate. \n" + mentor.get());
-		return new ApiResponse<String>("registration successful", "You will receive credentials in your email");
-	}
+//
+////Mentor Register...................................................
+//	@PostMapping(path = "/register/mentor")
+//	public ApiResponse<String> registerMentor(@RequestBody MentorDto mentorDto) {
+//		Optional<String> mentor = adminService.registerMentor(mentorDto);
+//		if(mentor.isPresent())
+//		sendEmail.sendEmail("yugandhar262@gmail.com", mentorDto.getMentorEmailId(), "Welcome to the team",
+//				"You are now registered as a mentor in the team of techno elevate. \n" + mentor.get());
+//		return new ApiResponse<String>("registration successful", "You will receive credentials in your email");
+//	}
+	
+	//Mentor Register...................................................
+		@PostMapping(path = "/register/mentor")
+		public ApiResponse<String> registerMentor(@RequestBody MentorDto mentorDto) {
+			Optional<String> mentor = adminService.registerMentor(mentorDto);
+			if(mentor.isPresent()) {
+			sendEmail.sendEmail("yugandhar262@gmail.com", mentorDto.getMentorEmailId(), "Welcome to the team",
+					"You are now registered as a mentor in the team of techno elevate. \n" + mentor.get());
+			return new ApiResponse<String>("registration successful", "You will receive credentials in your email");
+			}
+			throw new RegistrationFailedException("Unable to register the mentor please check the details and try again");
+		}
 
 //Mentor Update........................................................................
 	@PutMapping(path = "/update/mentor/{empId}")
@@ -51,8 +72,8 @@ public class AdminController {
 			return new ApiResponse<String>("Mentor was successfully updated",
 					"Mentor with mentor id  '" + empId + "' got updated.");
 		}
-		return new ApiResponse<String>("Updation is unsuccessfull",
-				"Mentor with mentor id  '" + empId + "' is not found in the database.");
+		throw new MentorUpdationFailedException("Unable to Update the Mentor please check the details and try again");
+	
 	}
 
 //Mentor Delete ..........................................................................
@@ -63,15 +84,17 @@ public class AdminController {
 			return new ApiResponse<String>("record was successfully deleted",
 					"mentor with employee id  '" + empId + "' got deleted.");
 		}
-		return new ApiResponse<String>("Deletion is unsuccessfull",
-				"mentor with employee id  '" + empId + "' is not found in the database.");
+		throw new MentorDeletionFailedException("Unable to Delete the Mentor please check the details and try again");
 	}
 
 //Batch Register.....................................................................................
 	@PostMapping(path = "/register/batch")
 	public ApiResponse<String> registerBatch(@RequestBody BatchRegisterDto batchRegisterDto) {
 		Optional<String> batch = adminService.registerBatch(batchRegisterDto);
+		if(batch.isPresent()) {
 		return new ApiResponse<String>("registration successful", "Batch aadded in the database." + batchRegisterDto);
+		}
+		throw new RegistrationFailedException("Unable to register the Batch please check the details and try again");
 	}
 
 //Batch Update...........................................................................
@@ -83,8 +106,7 @@ public class AdminController {
 			return new ApiResponse<String>("Batch was successfully updated",
 					"Batch with batch id  '" + batchId + "' got updated.");
 		}
-		return new ApiResponse<String>("Updation is unsuccessfull",
-				"Batch with batch id  '" + batchId + "' is not found in the database.");
+		throw new BatchUpdationFailedException("Unable to Delete the Batch please check the details and try again");
 	}
 
 //Delete Batch..............................................................................
@@ -95,9 +117,9 @@ public class AdminController {
 			return new ApiResponse<String>("record was successfully deleted",
 					"batch with batch id  '" + batchId + "' got deleted.");
 		}
-		return new ApiResponse<String>("Deletion is unsuccessfull",
-				"batch with batch id  '" + batchId + "' is not found in the database.");
+		throw new BatchDeletionFailedException("Unable to Delete the Batch please check the details and try again");
 	}
+	
 
 //Search Mentor.........................................................................................
 
@@ -107,7 +129,7 @@ public class AdminController {
 		if (mentorDto.isPresent()) {
 			return new ApiResponse<MentorDto>("Mentor is found for the employee id " + employeeId, mentorDto.get());
 		}
-		return new ApiResponse<MentorDto>("Mentor is not found in the dataabse", null);
+		throw new NoMentorsFoundException("no mentors found");
 	}
 
 //Approve.......................................................
@@ -123,8 +145,12 @@ public class AdminController {
 			return new ApiResponse<String>("Employee is approved",
 					"You will receive credentials in " + isPresent.get().getEmployeeEmail());
 		}
-		return new ApiResponse<String>("Employee is not approved", "");
+	
+		throw new EmployeeCannotBeApprovedException("employee cannot be approved");
 	}
+	
+
+
 
 //Reject..................................................................................
 	@PostMapping(path = "/reject/{employeeId}")
@@ -138,7 +164,7 @@ public class AdminController {
 			return new ApiResponse<String>("Sorry but your request can not be approved",
 					"you will get details in your email");
 		}
-		return new ApiResponse<String>("Employee id not found in the database", "");
+		throw new EmployeeNotFoundException("unable to find the employee");
 	}
 
 //Batch List............................................................................
